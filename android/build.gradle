@@ -14,6 +14,17 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Workaround for plugins that have not yet set a namespace (AGP 8+ requirement)
+subprojects { subproject ->
+    if (subproject.name == 'call_log') {
+        subproject.plugins.withId("com.android.library") {
+            subproject.android {
+                namespace "sk.fourq.calllog"
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
