@@ -1,6 +1,6 @@
 {
-    "name": "call_watcher_demo",
-    "short_name": "call_watcher_demo",
+    "name": "call_watcher",
+    "short_name": "call_watcher",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

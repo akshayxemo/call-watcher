@@ -1,6 +1,6 @@
-import 'package:call_watcher_demo/views/auth/signup.login.dart';
-import 'package:call_watcher_demo/views/home/employee/employee_home.dart';
-import 'package:call_watcher_demo/views/splash/splash.page.dart';
+import 'package:call_watcher/views/auth/signup.login.dart';
+import 'package:call_watcher/views/home/employee/employee_home.dart';
+import 'package:call_watcher/views/splash/splash.page.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRoutes {

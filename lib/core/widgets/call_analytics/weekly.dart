@@ -10,7 +10,7 @@ class WeeklyAnalyticsWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.blue.shade700.withValues(alpha: 0.6),
+          color: Colors.blue.shade700.withOpacity(0.6),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(

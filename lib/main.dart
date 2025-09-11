@@ -1,5 +1,5 @@
-import 'package:call_watcher_demo/app/routes/go.routes.dart';
-import 'package:call_watcher_demo/core/config/theme/app.theme.dart';
+import 'package:call_watcher/app/routes/go.routes.dart';
+import 'package:call_watcher/core/config/theme/app.theme.dart';
 import 'package:flutter/material.dart';
 
 void main() {

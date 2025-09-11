@@ -1,7 +1,7 @@
-import 'package:call_watcher_demo/core/widgets/call_analytics/today.dart';
-import 'package:call_watcher_demo/core/widgets/call_analytics/weekly.dart';
-import 'package:call_watcher_demo/core/widgets/call_logs/log_view.dart';
-import 'package:call_watcher_demo/core/widgets/location/location_display.dart';
+import 'package:call_watcher/core/widgets/call_analytics/today.dart';
+import 'package:call_watcher/core/widgets/call_analytics/weekly.dart';
+import 'package:call_watcher/core/widgets/call_logs/employee_call_log_list.dart';
+import 'package:call_watcher/core/widgets/location/location_display.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,6 +18,7 @@ class EmployeeHomePage extends StatefulWidget {
 class _EmployeeHomePageState extends State<EmployeeHomePage> {
   String _currentAddress = "Fetching address...";
   Iterable<CallLogEntry> _callLogs = [];
+  Iterable<CallLogEntry> _yesterdayCallLogs = [];
   Iterable<CallLogEntry> _todayCallLogs = [];
   bool _isLoading = true;
 
@@ -93,13 +94,25 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
       final List<CallLogEntry> computedToday = entries.where((el) {
         if (el.timestamp == null) return false;
         final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
-        return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+        return dt.year == now.year &&
+            dt.month == now.month &&
+            dt.day == now.day;
+      }).toList();
+
+      final List<CallLogEntry> computedYesterday = entries.where((el) {
+        if (el.timestamp == null) return false;
+        final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
+        return dt.year == now.year &&
+            dt.month == now.month &&
+            dt.day == now.day - 1;
       }).toList();
 
       final List<CallLogEntry> computedOlder = entries.where((el) {
         if (el.timestamp == null) return false;
         final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
-        return !(dt.year == now.year && dt.month == now.month && dt.day == now.day);
+        return !(dt.year == now.year &&
+            dt.month == now.month &&
+            (dt.day == now.day || dt.day == now.day - 1));
       }).toList();
 
       await Future.delayed(const Duration(seconds: 2));
@@ -107,6 +120,7 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
       // Update the state to reflect the fetched logs
       setState(() {
         _todayCallLogs = computedToday;
+        _yesterdayCallLogs = computedYesterday;
         _callLogs = computedOlder;
         _isLoading = false; // Set loading to false once data is fetched
       });
@@ -198,6 +212,20 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
                         ),
                       ],
                     ),
+                    // const Padding(
+                    //   padding: EdgeInsets.fromLTRB(8.0, 12, 8.0, 12.0),
+                    //   child: SizedBox(
+                    //     width: double.infinity,
+                    //     child: Text(
+                    //       "Call Logs",
+                    //       textAlign: TextAlign.start,
+                    //       style: TextStyle(
+                    //         fontSize: 20,
+                    //         fontWeight: FontWeight.bold,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                     const SizedBox(height: 8),
                     if (_isLoading)
                       const Center(
@@ -205,60 +233,21 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
                       ), // Show progress indicator when loading
                     if (!_isLoading && _callLogs.isEmpty)
                       const Text('No call logs found.'),
-                    if (!_isLoading && _todayCallLogs.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondary
-                                .withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6.0)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 8.0),
-                        child: Text(
-                          "Today",
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.secondary),
-                        ),
+                    if (!_isLoading && _todayCallLogs.isNotEmpty)
+                      EmployeeCallLogList(
+                        callLogs: _todayCallLogs.toList(),
+                        label: "Today",
                       ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _todayCallLogs.length,
-                        itemBuilder: (context, index) =>
-                            LogView(callLog: _todayCallLogs.elementAt(index)),
+                    if (!_isLoading && _yesterdayCallLogs.isNotEmpty)
+                      EmployeeCallLogList(
+                        callLogs: _yesterdayCallLogs.toList(),
+                        label: "Yesterday",
                       ),
-                    ],
-                    if (!_isLoading && _callLogs.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6.0)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 8.0),
-                        child: Text(
-                          "Older",
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor),
-                        ),
+                    if (!_isLoading && _callLogs.isNotEmpty)
+                      EmployeeCallLogList(
+                        callLogs: _callLogs.toList(),
+                        label: "Older",
                       ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _callLogs.length,
-                        itemBuilder: (context, index) =>
-                            LogView(callLog: _callLogs.elementAt(index)),
-                      ),
-                    ],
                   ],
                 ),
               ),

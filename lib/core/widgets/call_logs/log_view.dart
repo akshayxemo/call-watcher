@@ -1,8 +1,8 @@
-import 'package:call_watcher_demo/core/util/helper.dart';
-import 'package:call_watcher_demo/core/widgets/call_logs/log_icon.dart';
+import 'package:call_watcher/core/util/helper.dart';
+import 'package:call_watcher/core/widgets/call_logs/log_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:call_log/call_log.dart';
-import 'package:call_watcher_demo/core/config/enum.dart';
+import 'package:call_watcher/core/config/enum.dart';
 import 'package:intl/intl.dart';
 // import 'dart:developer' as developer;
 
@@ -87,7 +87,7 @@ class LogView extends StatelessWidget {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .tertiary
-                                      .withValues(alpha: 0.5),
+                                      .withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(4.0),
                                   border: Border.all(
                                     width: 0.2,
@@ -125,7 +125,7 @@ class LogView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
+                color: Colors.grey.withOpacity(0.1),
                 borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(8),
                     bottomRight: Radius.circular(8))),

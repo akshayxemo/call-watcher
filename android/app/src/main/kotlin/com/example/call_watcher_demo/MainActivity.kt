@@ -1,4 +1,4 @@
-package com.example.call_watcher_demo
+package com.example.call_watcher
 
 import io.flutter.embedding.android.FlutterActivity
 

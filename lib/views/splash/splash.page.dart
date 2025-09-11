@@ -1,4 +1,4 @@
-import 'package:call_watcher_demo/core/widgets/logo/logo_heading.animated.dart';
+import 'package:call_watcher/core/widgets/logo/logo_heading.animated.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

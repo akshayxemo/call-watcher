@@ -10,7 +10,7 @@ class TodayAnalyticsWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
+          color: Theme.of(context).primaryColor.withOpacity(0.8),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(

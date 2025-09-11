@@ -1,5 +1,5 @@
 // import 'package:call_log/call_log.dart';
-import 'package:call_watcher_demo/core/config/enum.dart';
+import 'package:call_watcher/core/config/enum.dart';
 import 'package:flutter/material.dart';
 
 class LogIcon extends StatelessWidget {

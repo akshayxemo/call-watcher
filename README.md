@@ -1,4 +1,4 @@
-# call_watcher_demo
+# call_watcher
 
 A new Flutter project.
 

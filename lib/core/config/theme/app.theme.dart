@@ -1,4 +1,4 @@
-import 'package:call_watcher_demo/core/config/theme/app.colors.dart';
+import 'package:call_watcher/core/config/theme/app.colors.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
