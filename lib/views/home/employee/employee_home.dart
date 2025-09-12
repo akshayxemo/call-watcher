@@ -167,24 +167,39 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
             ],
           ),
           actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications,
-                size: 24,
+            Padding(
+              padding: const EdgeInsets.only(
+                  right: 16.0), // Add padding to the right of the button
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.logout,
+                  size: 24,
+                ),
+                label: const Text('Logout'),
               ),
-              onPressed: () {
-                // Handle notification action
-              },
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.settings,
-                size: 24,
-              ),
-              onPressed: () {
-                // Handle settings action
-              },
-            ),
+            // IconButton(
+            //   icon: const Icon(
+            //     Icons.notifications,
+            //     size: 24,
+            //   ),
+            //   onPressed: () {
+            //     // Handle notification action
+            //   },
+            // ),
+            // IconButton(
+            //   icon: const Icon(
+            //     Icons.settings,
+            //     size: 24,
+            //   ),
+            //   onPressed: () {
+            //     // Handle settings action
+            //   },
+            // ),
           ],
         ),
         body: SafeArea(
