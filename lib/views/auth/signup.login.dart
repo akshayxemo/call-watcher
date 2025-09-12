@@ -28,7 +28,7 @@ class SignUpLoginPage extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     // Handle Sign Up action
-                    context.go('/home/employee');
+                    context.go('/auth/signin/employee');
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50), // Full width
@@ -73,6 +73,7 @@ class SignUpLoginPage extends StatelessWidget {
                 OutlinedButton(
                   onPressed: () {
                     // Handle Login action
+                    context.go('/auth/signup/employee');
                   },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50), // Full width
