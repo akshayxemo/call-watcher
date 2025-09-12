@@ -1,6 +1,9 @@
-import 'package:call_watcher/core/widgets/logo/logo_heading.dart';
 import 'package:call_watcher/core/widgets/logo/logo_heading_auth.dart';
+import 'package:call_watcher/data/models/employee.dart';
+import 'package:call_watcher/domain/usecases/auth/signup_employee.dart';
+import 'package:call_watcher/service_locator.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SignupEmployeePage extends StatelessWidget {
   const SignupEmployeePage({super.key});
@@ -13,6 +16,43 @@ class SignupEmployeePage extends StatelessWidget {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+
+    Future<void> signupEmployee() async {
+      try {
+        if (formKey.currentState!.validate()) {
+          // If all fields validated, process registration
+          // Access values: nameController.text, emailController.text, passwordController.text
+          final messenger = ScaffoldMessenger.of(context);
+          final router = GoRouter.of(context);
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Processing Data')),
+          );
+
+          final employee = Employee(
+              name: nameController.text,
+              email: emailController.text,
+              password: passwordController.text);
+
+          final result = await serviceLocator<SignupEmployeeUseCase>()
+              .call(params: employee);
+
+          if (result.isRight()) {
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Account created successfully')),
+            );
+            await Future.delayed(const Duration(seconds: 2));
+            router.goNamed('login:employee');
+          } else {
+            messenger.showSnackBar(SnackBar(
+                content: Text(result.leftMap((l) => l.toString()).toString())));
+          }
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
 
     return Scaffold(
         appBar: AppBar(
@@ -123,16 +163,7 @@ class SignupEmployeePage extends StatelessWidget {
                               ),
                               elevation: 0,
                             ),
-                            onPressed: () {
-                              if (formKey.currentState!.validate()) {
-                                // If all fields validated, process registration
-                                // Access values: nameController.text, emailController.text, passwordController.text
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Processing Data')),
-                                );
-                              }
-                            },
+                          onPressed: signupEmployee,
                             child: const Text('Sign Up'),
                           ),
                           Row(
@@ -148,7 +179,7 @@ class SignupEmployeePage extends StatelessWidget {
                                   Navigator.pop(context);
                                 },
                                 child: const Text(
-                                  'Login',
+                                'Sign Up',
                                   style: TextStyle(
                                     color: Colors.blue,
                                   ),
@@ -166,6 +197,7 @@ class SignupEmployeePage extends StatelessWidget {
               ),
             ),
           ),
-        ));
+      ),
+    );
   }
 }

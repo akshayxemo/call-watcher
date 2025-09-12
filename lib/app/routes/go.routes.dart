@@ -1,3 +1,4 @@
+import 'package:call_watcher/views/auth/login/login.employeer.dart';
 import 'package:call_watcher/views/auth/signup.login.dart';
 import 'package:call_watcher/views/auth/signup/signup.employee.dart';
 import 'package:call_watcher/views/home/employee/employee_home.dart';
@@ -30,7 +31,7 @@ class AppRoutes {
             GoRoute(
               path: loginEmployee,
               name: 'login:employee',
-              builder: (context, state) => const SignUpLoginPage(),
+              builder: (context, state) => const LoginEmployeePage(),
             ),
             GoRoute(
               path: signupEmployee,

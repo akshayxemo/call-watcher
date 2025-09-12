@@ -1,8 +1,11 @@
 import 'package:call_watcher/app/routes/go.routes.dart';
 import 'package:call_watcher/core/config/theme/app.theme.dart';
+import 'package:call_watcher/service_locator.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDependencies();
   runApp(const MyApp());
 }
 

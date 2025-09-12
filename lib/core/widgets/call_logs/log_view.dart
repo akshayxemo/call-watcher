@@ -44,7 +44,7 @@ class LogView extends StatelessWidget {
     final timestamp = log.timestamp != null
         ? DateTime.fromMillisecondsSinceEpoch(log.timestamp ?? 0).toLocal()
         : DateTime.now();
-    final String timeStr = DateFormat('HH:mm').format(timestamp);
+    final String timeStr = DateFormat('HH:mm:ss').format(timestamp);
     final String dateStr = DateFormat('dd MMM').format(timestamp);
     return Container(
       padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),

@@ -1,0 +1,63 @@
+import 'package:call_watcher/core/util/database.helper.dart';
+import 'package:sqflite/sqflite.dart';
+
+class CallLogsStore {
+  final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
+  Future<DatabaseHelper> get dbHelper async => _databaseHelper;
+  Future<int> insertCallLog(Map<String, dynamic> callLog) async {
+    final db = await _databaseHelper.database;
+    return await db.insert('call_logs', callLog);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllCallLogsByUserId(int userId) async {
+    final db = await _databaseHelper.database;
+    return await db
+        .query('call_logs', where: 'user_id = ?', whereArgs: [userId]);
+  }
+
+  Future<List<Map<String, dynamic>>> getCallLogsByUserIdAndDateRangePaginated(
+      int userId, int startDate, int endDate, int page, int pageSize) async {
+    final db = await _databaseHelper.database;
+    return await db.query('call_logs',
+        where: 'user_id = ? AND date BETWEEN ? AND ?',
+        whereArgs: [userId, startDate, endDate],
+        orderBy: 'date DESC',
+        limit: pageSize,
+        offset: (page - 1) * pageSize);
+  }
+
+  Future<List<Map<String, dynamic>>> getCallLogsByUserIdPaginated(
+      int userId, int page, int pageSize) async {
+    final db = await _databaseHelper.database;
+    return await db.query('call_logs',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'date DESC',
+        limit: pageSize,
+        offset: (page - 1) * pageSize);
+  }
+
+  Future<Map<String, dynamic>?> getLastCallLogByUserId(int userId) async {
+    final db = await _databaseHelper.database;
+    final result = await db.query('call_logs',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'date DESC',
+        limit: 1);
+    if (result.isNotEmpty) {
+      return result.first;
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> insertCallLogsBatch(List<Map<String, dynamic>> callLogs) async {
+    final db = await _databaseHelper.database;
+    Batch batch = db.batch();
+    for (var log in callLogs) {
+      batch.insert('call_logs', log);
+    }
+    List<dynamic> results = await batch.commit(noResult: false);
+    return results.length;
+  }
+}

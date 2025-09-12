@@ -47,6 +47,9 @@ dependencies:
   sqflite: ^2.3.3+1
   path_provider: ^2.1.5
   path: ^1.9.0
+  dartz: ^0.10.1
+  get_it: ^8.2.0
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:
