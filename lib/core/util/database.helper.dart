@@ -35,11 +35,13 @@ class DatabaseHelper {
       CREATE TABLE IF NOT EXISTS call_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
+        name TEXT,
         number TEXT NOT NULL,
+        formattedNumber TEXT,
         sim TEXT,
         type TEXT NOT NULL,
         date INTEGER NOT NULL,
-        duration INTEGER NOT NULL,
+        duration INTEGER,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');

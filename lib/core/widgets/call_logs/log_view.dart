@@ -1,30 +1,14 @@
 import 'package:call_watcher/core/util/helper.dart';
 import 'package:call_watcher/core/widgets/call_logs/log_icon.dart';
+import 'package:call_watcher/data/models/call_log.dart';
 import 'package:flutter/material.dart';
-import 'package:call_log/call_log.dart';
-import 'package:call_watcher/core/config/enum.dart';
 import 'package:intl/intl.dart';
 // import 'dart:developer' as developer;
 
 class LogView extends StatelessWidget {
-  final CallLogEntry callLog;
+  final CallLogRecord callLog;
 
   const LogView({super.key, required this.callLog});
-
-  CallRecordType _mapToRecordType(CallType? t) {
-    switch (t) {
-      case CallType.incoming:
-        return CallRecordType.incoming;
-      case CallType.outgoing:
-        return CallRecordType.outgoing;
-      case CallType.rejected:
-        return CallRecordType.rejected;
-      case CallType.missed:
-        return CallRecordType.missed;
-      default:
-        return CallRecordType.missed;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,15 +19,14 @@ class LogView extends StatelessWidget {
         ? log.name!.trim()
         : 'Unknown Person';
     final number = log.formattedNumber ?? 'Unknown';
-    final sim = log.simDisplayName;
+    final sim = log.sim;
     // developer.log("Name:  ${log.name} , $displayName , number : $number");
 
-    final recordType = _mapToRecordType(log.callType);
+    final recordType = log.type;
     final duration =
         log.duration != null ? '${log.duration}s' : 'Unknown duration';
-    final timestamp = log.timestamp != null
-        ? DateTime.fromMillisecondsSinceEpoch(log.timestamp ?? 0).toLocal()
-        : DateTime.now();
+    final timestamp = DateTime.fromMillisecondsSinceEpoch(log.date).toLocal();
+
     final String timeStr = DateFormat('HH:mm:ss').format(timestamp);
     final String dateStr = DateFormat('dd MMM').format(timestamp);
     return Container(

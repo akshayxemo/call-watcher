@@ -30,13 +30,20 @@ class LoginEmployeePage extends StatelessWidget {
           final result = await serviceLocator<AuthRepository>()
               .employeeSignin(emailController.text, passwordController.text);
           if (result.isRight()) {
-            final userData = result.getOrElse(() => {});
-            await persistSession(
-              userId: userData['id'] as int,
-              name: userData['name'] as String,
-              email: userData['email'] as String,
-              role: 'employee',
-            );
+            final userData = result.getOrElse(() => null);
+            if (userData != null) {
+              await persistSession(
+                userId: userData['id'] as int,
+                name: userData['name'] as String,
+                email: userData['email'] as String,
+                role: 'employee',
+              );
+            } else {
+              messenger.showSnackBar(
+                const SnackBar(content: Text('User not found')),
+              );
+              return;
+            }
             await Future.delayed(const Duration(seconds: 2));
             messenger.hideCurrentSnackBar();
             messenger.showSnackBar(
@@ -47,8 +54,11 @@ class LoginEmployeePage extends StatelessWidget {
             );
             router.goNamed('employee:home');
           } else {
-            messenger.showSnackBar(SnackBar(
-                content: Text(result.leftMap((l) => l.toString()).toString())));
+            final error = result.fold(
+              (left) => left.toString(),
+              (right) => 'Unknown error',
+            );
+            messenger.showSnackBar(SnackBar(content: Text(error)));
           }
         }
       } catch (e) {

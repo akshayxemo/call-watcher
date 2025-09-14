@@ -1,8 +1,9 @@
 import 'package:call_watcher/core/widgets/call_logs/log_view.dart';
+import 'package:call_watcher/data/models/call_log.dart';
 import 'package:flutter/material.dart';
 
 class EmployeeCallLogList extends StatelessWidget {
-  final List callLogs;
+  final List<CallLogRecord> callLogs;
   final String label;
   const EmployeeCallLogList({
     super.key,
@@ -34,8 +35,11 @@ class EmployeeCallLogList extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: callLogs.length,
-          itemBuilder: (context, index) =>
-              LogView(callLog: callLogs.elementAt(index)),
+          itemBuilder: (context, index) {
+            // print(
+            //     "->>>>>>>>>>>>>>>>>>>> : ${callLogs.elementAt(index).toMap()}");
+            return LogView(callLog: callLogs.elementAt(index));
+          },
         ),
       ],
     );

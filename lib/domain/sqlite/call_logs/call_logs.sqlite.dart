@@ -51,11 +51,13 @@ class CallLogsStore {
     }
   }
 
-  Future<int> insertCallLogsBatch(List<Map<String, dynamic>> callLogs) async {
+  Future<int> insertCallLogsBatch(
+      List<Map<String, dynamic>> callLogs, int userId) async {
     final db = await _databaseHelper.database;
     Batch batch = db.batch();
     for (var log in callLogs) {
-      batch.insert('call_logs', log);
+      print('Entered Batch result: ${log.toString()} $userId');
+      batch.insert('call_logs', {...log, 'user_id': userId});
     }
     List<dynamic> results = await batch.commit(noResult: false);
     return results.length;

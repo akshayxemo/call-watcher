@@ -1,15 +1,25 @@
+import 'package:call_watcher/core/util/helper.dart';
 import 'package:call_watcher/core/util/persistance_storage.helper.dart';
+import 'package:call_watcher/core/widgets/app_bar/employee_home.dart';
 import 'package:call_watcher/core/widgets/call_analytics/today.dart';
 import 'package:call_watcher/core/widgets/call_analytics/weekly.dart';
 import 'package:call_watcher/core/widgets/call_logs/employee_call_log_list.dart';
 import 'package:call_watcher/core/widgets/location/location_display.dart';
+import 'package:call_watcher/data/models/call_log.dart';
 import 'package:call_watcher/data/models/employee.dart';
+import 'package:call_watcher/domain/entity/call_log/call_log.dart';
+import 'package:call_watcher/domain/entity/call_log/update_log.dart';
+import 'package:call_watcher/domain/repository/call_log.dart';
+import 'package:call_watcher/domain/usecases/call_log/get_last_call_log.dart';
+import 'package:call_watcher/domain/usecases/call_log/get_past_seven_day_logs.dart';
+import 'package:call_watcher/domain/usecases/call_log/update_log.dart';
+import 'package:call_watcher/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:call_log/call_log.dart';
+import 'dart:developer' as dev;
 
 class EmployeeHomePage extends StatefulWidget {
   const EmployeeHomePage({super.key});
@@ -19,11 +29,18 @@ class EmployeeHomePage extends StatefulWidget {
 }
 
 class _EmployeeHomePageState extends State<EmployeeHomePage> {
+  final ScrollController _controller = ScrollController();
   String _currentAddress = "Fetching address...";
-  Iterable<CallLogEntry> _callLogs = [];
-  Iterable<CallLogEntry> _yesterdayCallLogs = [];
-  Iterable<CallLogEntry> _todayCallLogs = [];
+  Iterable<CallLogRecord> _callLogs = [];
+  Iterable<CallLogRecord> _yesterdayCallLogs = [];
+  Iterable<CallLogRecord> _todayCallLogs = [];
+  int _weeklyLogCount = 0;
   bool _isLoading = true;
+  int page = 1;
+  int limit = 10;
+  bool _hasMore = true;
+  bool _isMoreDataLoading = false;
+  String _loadMoreMessage = "";
 
   Employee? employee;
 
@@ -32,8 +49,23 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
     super.initState();
     _checkValidSessionOrRedirect();
     _isLoading = true;
-    _requestPermissions();
     _loadEmployeeData();
+    _requestPermissions();
+    _controller.addListener(() {
+      if (_controller.position.pixels >=
+              _controller.position.maxScrollExtent - 200 &&
+          !_isMoreDataLoading &&
+          !_isLoading &&
+          _hasMore) {
+        _loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _checkValidSessionOrRedirect() async {
@@ -98,59 +130,212 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
     }
   }
 
+  Future<void> _loadMore() async {
+    setState(() {
+      _isMoreDataLoading = true;
+      _loadMoreMessage = "";
+    });
+    await Future.delayed(const Duration(seconds: 2)); // simulate API
+    int nextPage = page + 1;
+    int result = await fetchCallLogsByPage(nextPage, limit);
+    if (result != -1) {
+      if (result == 0) {
+        setState(() {
+          _isMoreDataLoading = false;
+          _loadMoreMessage = "No more data available";
+        });
+      } else {
+        setState(() {
+          page = nextPage;
+          _hasMore = result >= limit ? true : false;
+          _isMoreDataLoading = false;
+          _loadMoreMessage = "";
+        });
+      }
+    } else {
+      setState(() {
+        _isMoreDataLoading = false;
+        _loadMoreMessage = "Something Went Wrong!";
+      });
+    }
+  }
+
+  Future<int> fetchCallLogsByPage(int page, int limit) async {
+    int? id = employee?.id;
+    final messenger = ScaffoldMessenger.of(context);
+    if (id == null) return -1;
+    try {
+      final List<CallLogRecord>? data =
+          await serviceLocator<CallLogRepository>()
+              .getCallLogEntriesByEmployeeId(id, page, limit);
+      dev.log(">>>>>>>> ${data?.length}");
+
+      if (data == null || data.isEmpty) {
+        setState(() {
+          _todayCallLogs = [];
+          _yesterdayCallLogs = [];
+          _callLogs = [];
+          _isLoading = false; // Stop loading even if there's an error
+        });
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('No Data Found'),
+          ),
+        );
+        return 0;
+      } else {
+        final FormattedLogs logs = getFormattedLogs(data);
+        setState(() {
+          _todayCallLogs = [
+            if (page != 1) ..._todayCallLogs,
+            ...logs.todayLogs
+          ];
+          _yesterdayCallLogs = [
+            if (page != 1) ..._yesterdayCallLogs,
+            ...logs.yesterdayLogs
+          ];
+          _callLogs = [
+            if (page != 1) ..._callLogs,
+            ...logs.olderLogs,
+          ];
+          _isLoading = false; // Stop loading even if there's an error
+        });
+        final allLogs = [
+          ...logs.todayLogs,
+          ...logs.yesterdayLogs,
+          ...logs.olderLogs,
+        ];
+        dev.log(">>>>>>>> Log : ${allLogs.length}");
+        return allLogs.length;
+      }
+    } catch (error) {
+      dev.log(">>>>>>>> Error:  ${error.toString()}");
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load the data'),
+        ),
+      );
+      return -1;
+    }
+  }
+
+  Future<void> _setWeeklyLogs() async {
+    final FormattedLogs? logs =
+        await serviceLocator<GetPastSevenDayLogs>().call();
+    setState(() {
+      _weeklyLogCount = (logs?.todayLogs.length ?? 0) +
+          (logs?.yesterdayLogs.length ?? 0) +
+          (logs?.olderLogs.length ?? 0);
+    });
+  }
+
   // Fetch call logs
   Future<void> _getCallLog() async {
+    int? id = employee?.id;
+    final messenger = ScaffoldMessenger.of(context);
+    if (id == null) return;
     // Immediately show loading
     setState(() {
       _isLoading = true;
     });
+    //in milisecond
+    final lastRecordDateInMiliSecond =
+        await serviceLocator<GetLastCallLogUseCase>().call(params: id);
 
-    try {
-      final Iterable<CallLogEntry> entries = await CallLog.query(
-        dateTimeFrom: DateTime.now().subtract(const Duration(days: 7)),
-        dateTimeTo: DateTime.now(),
-      );
-      final DateTime now = DateTime.now().toLocal();
-
-      final List<CallLogEntry> computedToday = entries.where((el) {
-        if (el.timestamp == null) return false;
-        final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
-        return dt.year == now.year &&
-            dt.month == now.month &&
-            dt.day == now.day;
-      }).toList();
-
-      final List<CallLogEntry> computedYesterday = entries.where((el) {
-        if (el.timestamp == null) return false;
-        final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
-        return dt.year == now.year &&
-            dt.month == now.month &&
-            dt.day == now.day - 1;
-      }).toList();
-
-      final List<CallLogEntry> computedOlder = entries.where((el) {
-        if (el.timestamp == null) return false;
-        final dt = DateTime.fromMillisecondsSinceEpoch(el.timestamp!).toLocal();
-        return !(dt.year == now.year &&
-            dt.month == now.month &&
-            (dt.day == now.day || dt.day == now.day - 1));
-      }).toList();
-
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Update the state to reflect the fetched logs
+    if (lastRecordDateInMiliSecond == 0) {
+      // await _getPastSevenDayLogs();
+      print("From Call Log");
+      final FormattedLogs? logs =
+          await serviceLocator<GetPastSevenDayLogs>().call();
+      if (logs == null) {
+        setState(() {
+          _todayCallLogs = [];
+          _yesterdayCallLogs = [];
+          _callLogs = [];
+          _isLoading = false; // Stop loading even if there's an error
+        });
+        return;
+      }
       setState(() {
-        _todayCallLogs = computedToday;
-        _yesterdayCallLogs = computedYesterday;
-        _callLogs = computedOlder;
-        _isLoading = false; // Set loading to false once data is fetched
-      });
-    } catch (error) {
-      // Handle errors if any
-      debugPrint("Error fetching call logs: $error");
-      setState(() {
+        _todayCallLogs = logs.todayLogs;
+        _yesterdayCallLogs = logs.yesterdayLogs;
+        _callLogs = logs.olderLogs;
         _isLoading = false; // Stop loading even if there's an error
       });
+      final List<CallLogRecord> combinedLogs = [
+        ...logs.todayLogs,
+        ...logs.yesterdayLogs,
+        ...logs.olderLogs,
+      ];
+      print("Updating...");
+      final updatedRows = await serviceLocator<UpdateCallLogsUseCase>().call(
+        params: UpdateLogParams(
+          userId: id,
+          callLogs: combinedLogs,
+        ),
+      );
+      updatedRows.fold(
+        (left) {
+          messenger.showSnackBar(
+            SnackBar(content: Text('Error: ${left.toString()}')),
+          );
+        },
+        (right) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Successfully updated call logs')),
+          );
+        },
+      );
+      return;
+    } else {
+      print("From DB");
+      final DateTime lastRecordDate =
+          DateTime.fromMillisecondsSinceEpoch(lastRecordDateInMiliSecond)
+              .toLocal();
+      final FormattedLogs? logs = await serviceLocator<GetPastSevenDayLogs>()
+          .call(params: lastRecordDate);
+      // final List<CallLogRecord> combinedCurrentLogs = [
+      //   ..._todayCallLogs,
+      //   ..._yesterdayCallLogs,
+      //   ..._callLogs,
+      // ];
+      final List<CallLogRecord> combinedLogs = [
+        if (logs != null) ...logs.todayLogs,
+        if (logs != null) ...logs.yesterdayLogs,
+        if (logs != null) ...logs.olderLogs,
+      ];
+
+      if (combinedLogs.isNotEmpty) {
+        print("Updating...");
+        final updatedRows = await serviceLocator<UpdateCallLogsUseCase>().call(
+          params: UpdateLogParams(
+            userId: id,
+            callLogs: combinedLogs,
+          ),
+        );
+        updatedRows.fold(
+          (left) {
+            messenger.showSnackBar(
+              SnackBar(content: Text('Error: ${left.toString()}')),
+            );
+          },
+          (right) {
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Successfully updated call logs')),
+            );
+          },
+        );
+      }
+
+      await fetchCallLogsByPage(1, 10);
+      setState(() {
+        page = 1;
+        limit = 10;
+        _hasMore = true;
+        _isMoreDataLoading = false;
+        _loadMoreMessage = "";
+      });
+      await _setWeeklyLogs();
     }
   }
 
@@ -158,61 +343,14 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/avatar.jpg'),
-              radius: 20,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    employee?.name != null && employee!.name != ""
-                        ? employee!.name
-                        : 'John Doe',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Text(
-                    employee?.email != null && employee!.email != ""
-                        ? employee!.email
-                        : 'Employee',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        title: EmployeeHomeAppBarTitle(
+          employee: employee,
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(
-                right: 16.0), // Add padding to the right of the button
-            // child: TextButton.icon(
-            //   style: TextButton.styleFrom(
-            //     foregroundColor: Colors.black,
-            //   ),
-            //   onPressed: () {},
-            //   icon: const Icon(
-            //     Icons.logout,
-            //     size: 24,
-            //   ),
-            //   label: const Text('Logout'),
-            // ),
+              right: 16.0,
+            ), // Add padding to the right of the button
             child: IconButton(
               style: TextButton.styleFrom(
                 foregroundColor: Colors.black,
@@ -238,24 +376,6 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
               ),
             ),
           ),
-          // IconButton(
-          //   icon: const Icon(
-          //     Icons.notifications,
-          //     size: 24,
-          //   ),
-          //   onPressed: () {
-          //     // Handle notification action
-          //   },
-          // ),
-          // IconButton(
-          //   icon: const Icon(
-          //     Icons.settings,
-          //     size: 24,
-          //   ),
-          //   onPressed: () {
-          //     // Handle settings action
-          //   },
-          // ),
         ],
       ),
       body: _isLoading || employee == null
@@ -266,6 +386,7 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
               child: RefreshIndicator(
                 onRefresh: _getCallLog,
                 child: SingleChildScrollView(
+                  controller: _controller,
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding:
@@ -283,31 +404,19 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
                             ),
                             const SizedBox(width: 8),
                             WeeklyAnalyticsWidget(
-                              totalCount:
-                                  _todayCallLogs.length + _callLogs.length,
+                              totalCount: _weeklyLogCount,
                             ),
                           ],
                         ),
-                        // const Padding(
-                        //   padding: EdgeInsets.fromLTRB(8.0, 12, 8.0, 12.0),
-                        //   child: SizedBox(
-                        //     width: double.infinity,
-                        //     child: Text(
-                        //       "Call Logs",
-                        //       textAlign: TextAlign.start,
-                        //       style: TextStyle(
-                        //         fontSize: 20,
-                        //         fontWeight: FontWeight.bold,
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                         const SizedBox(height: 8),
                         if (_isLoading)
                           const Center(
                             child: CircularProgressIndicator(),
                           ), // Show progress indicator when loading
-                        if (!_isLoading && _callLogs.isEmpty)
+                        if (!_isLoading &&
+                            _callLogs.isEmpty &&
+                            _todayCallLogs.isEmpty &&
+                            _yesterdayCallLogs.isEmpty)
                           const Text('No call logs found.'),
                         if (!_isLoading && _todayCallLogs.isNotEmpty)
                           EmployeeCallLogList(
@@ -323,6 +432,32 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
                           EmployeeCallLogList(
                             callLogs: _callLogs.toList(),
                             label: "Older",
+                          ),
+                        if (_isMoreDataLoading && !_isLoading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        if (_loadMoreMessage.isNotEmpty &&
+                            !_isMoreDataLoading &&
+                            !_isLoading)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text(_loadMoreMessage),
+                            ),
+                          ),
+                        if (!_hasMore && !_isMoreDataLoading && !_isLoading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                "No More Data",
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                       ],
                     ),

@@ -22,6 +22,16 @@ class UsersStore {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final db = await _databaseHelper.database;
+    final result = await db.query('users');
+    if (result.isNotEmpty) {
+      return result;
+    } else {
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>?> getUserById(int id) async {
     final db = await _databaseHelper.database;
     final result = await db.query('users', where: 'id = ?', whereArgs: [id]);
@@ -37,9 +47,15 @@ class UsersStore {
     final db = await _databaseHelper.database;
     final result = await db.query('users',
         where: 'email = ? AND password = ?', whereArgs: [email, password]);
+    print('Trying to login with: $email / $password');
+    print('Query result: $result');
     if (result.isNotEmpty) {
       return result.first;
     } else {
+      // Try to see if the email exists at all
+      final emailResult =
+          await db.query('users', where: 'email = ?', whereArgs: [email]);
+      print('Email-only query result: $emailResult');
       return null;
     }
   }

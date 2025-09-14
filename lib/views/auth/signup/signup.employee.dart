@@ -43,8 +43,11 @@ class SignupEmployeePage extends StatelessWidget {
             await Future.delayed(const Duration(seconds: 2));
             router.goNamed('login:employee');
           } else {
-            messenger.showSnackBar(SnackBar(
-                content: Text(result.leftMap((l) => l.toString()).toString())));
+            final error = result.fold(
+              (left) => left.toString(),
+              (right) => 'Unknown error',
+            );
+            messenger.showSnackBar(SnackBar(content: Text(error)));
           }
         }
       } catch (e) {

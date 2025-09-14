@@ -4,35 +4,39 @@ import 'package:call_watcher/data/models/employee.dart';
 import 'package:call_watcher/domain/repository/auth.dart';
 import 'package:call_watcher/domain/sqlite/users/users.sqlite.dart';
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   // final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
 
   @override
-  Future<Either> employeeSignin(String email, String password) async {
+  Future<Either<Exception, Map<String, dynamic>?>> employeeSignin(
+      String email, String password) async {
     try {
+      final allUser = await UsersStore().getAllUsers();
+      allUser.map((el) => print("User ->>>> :  ${el.toString()}"));
       final user =
           await UsersStore().getUserByEmailAndPassword(email, password);
       if (user == null) {
-        return left('Usr not found');
+        return left(Exception('User Not Found'));
       }
 
       return right(user);
     } on DatabaseException catch (e) {
-      return left('Database error: ${e.toString()}');
+      return left(Exception('Database error: ${e.toString()}'));
     } catch (e) {
-      return left('Unexpected error: ${e.toString()}');
+      return left(Exception('Unexpected error: ${e.toString()}'));
     }
   }
 
   @override
-  Future<Either> employeeSignup(Employee employee) async {
+  Future<Either<Exception, int>> employeeSignup(Employee employee) async {
     try {
       // Check if email already exists
       final existing = await UsersStore().getUserByEmail(employee.email);
       if (existing.isNotEmpty) {
-        return left('Email already registered');
+        return left(Exception('Email already registered'));
       }
 
       final userMap = <String, dynamic>{
@@ -47,11 +51,11 @@ class AuthRepositoryImpl implements AuthRepository {
     } on DatabaseException catch (e) {
       // Handle unique constraint or other DB issues
       if (e.isUniqueConstraintError()) {
-        return left('Email already registered');
+        return left(Exception('Email already registered'));
       }
-      return left('Database error: ${e.toString()}');
+      return left(Exception('Database error: ${e.toString()}'));
     } catch (e) {
-      return left('Unexpected error: ${e.toString()}');
+      return left(Exception('Unexpected error: ${e.toString()}'));
     }
   }
 
