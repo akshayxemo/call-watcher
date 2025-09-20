@@ -71,6 +71,20 @@ class AppTheme {
         titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         bodyMedium: TextStyle(fontSize: 16),
       ),
+      // navigationBarTheme: NavigationBarThemeData(
+      //   backgroundColor: Colors.grey.shade100,
+      //   surfaceTintColor: Colors.transparent,
+      //   height: 80,
+      //   labelTextStyle: WidgetStateProperty.all(
+      //     const TextStyle(
+      //       color: Colors.black45,
+      //       fontSize: 12,
+      //     ),
+      //   ),
+      //   iconTheme: WidgetStateProperty.all(
+      //     const IconThemeData(color: Colors.black45, size: 24),
+      //   ),
+      // ),
       // buttonTheme: const ButtonThemeData(
       //   buttonColor: AppColors.primary,
       //   textTheme: ButtonTextTheme.primary,

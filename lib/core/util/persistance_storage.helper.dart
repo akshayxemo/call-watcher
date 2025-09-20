@@ -1,3 +1,4 @@
+import 'package:call_watcher/data/models/admin.dart';
 import 'package:call_watcher/data/models/employee.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,4 +50,14 @@ Future<Employee> getCurrentEmployeeFromSessionData() async {
   final String email = prefs.getString("user_email") ?? "";
 
   return Employee(id: id, name: name, email: email);
+}
+
+Future<Admin> getCurrentEAdminFromSessionData() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final int id = prefs.getInt("user_id") ?? 0;
+  final String name = prefs.getString("user_name") ?? "";
+  final String email = prefs.getString("user_email") ?? "";
+
+  return Admin(id: id, name: name, email: email);
 }

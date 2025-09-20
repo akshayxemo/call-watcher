@@ -4,7 +4,6 @@ import 'package:call_watcher/data/models/employee.dart';
 import 'package:call_watcher/domain/repository/auth.dart';
 import 'package:call_watcher/domain/sqlite/users/users.sqlite.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AuthRepositoryImpl implements AuthRepository {

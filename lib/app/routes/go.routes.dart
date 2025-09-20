@@ -1,6 +1,7 @@
 import 'package:call_watcher/views/auth/login/login.employeer.dart';
 import 'package:call_watcher/views/auth/signup.login.dart';
 import 'package:call_watcher/views/auth/signup/signup.employee.dart';
+import 'package:call_watcher/views/home/admin/admin_home.dart';
 import 'package:call_watcher/views/home/employee/employee_home.dart';
 import 'package:call_watcher/views/splash/splash.page.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String signupEmployee = '/signup/employee';
   static const String loginAdmin = '/login/admin';
   static const String employeeHome = '/home/employee';
+  static const String adminHome = '/home/admin';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -44,6 +46,11 @@ class AppRoutes {
         path: employeeHome,
         name: 'employee:home',
         builder: (context, state) => const EmployeeHomePage(),
+      ),
+      GoRoute(
+        path: adminHome,
+        name: 'admin:home',
+        builder: (context, state) => const AdminHome(),
       ),
     ],
   );
