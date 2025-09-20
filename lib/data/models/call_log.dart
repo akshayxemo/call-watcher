@@ -11,6 +11,8 @@ class CallLogRecord {
   final CallRecordType type;
   final int date;
   final int? duration;
+  final String? userName;
+  final int? userId;
 
   CallLogRecord({
     this.id,
@@ -21,6 +23,8 @@ class CallLogRecord {
     required this.type,
     required this.date,
     this.duration,
+    this.userName,
+    this.userId,
   });
 
   // Factory constructor to create CallLogRecord from Map
@@ -37,6 +41,8 @@ class CallLogRecord {
       ),
       date: map['date'] as int,
       duration: map['duration'],
+      userName: map['user_name'],
+      userId: map['user_id'],
     );
   }
 
@@ -45,7 +51,7 @@ class CallLogRecord {
     return CallLogRecord(
       number: log.number ?? "",
       name: log.name,
-      formattedNumber:log.formattedNumber,
+      formattedNumber: log.formattedNumber,
       sim: log.simDisplayName,
       type: mapToRecordType(log.callType),
       date: log.timestamp ?? 0,
@@ -64,8 +70,11 @@ class CallLogRecord {
       'type': type.name,
       'date': date,
       'duration': duration,
+      'userName': userName,
+      'userId': userId,
     };
   }
+
   // Convert CallLogRecord to Map (useful for database operations)
   Map<String, dynamic> toMapWithoutId() {
     return {
@@ -76,6 +85,8 @@ class CallLogRecord {
       'type': type.name,
       'date': date,
       'duration': duration,
+      'userName': userName,
+      'userId': userId,
     };
   }
 }

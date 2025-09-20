@@ -11,3 +11,13 @@ class FormattedLogs {
     required this.todayLogs,
   });
 }
+
+class PaginatedCallLogsResponse {
+  final List<CallLogRecord> logs;
+  final int totalCount;
+
+  PaginatedCallLogsResponse({
+    required this.logs,
+    required this.totalCount,
+  });
+}

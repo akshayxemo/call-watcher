@@ -1,8 +1,14 @@
+import 'package:call_watcher/core/config/theme/app.colors.dart';
 import 'package:call_watcher/core/util/persistance_storage.helper.dart';
 import 'package:call_watcher/core/widgets/app_bar/admin_home.dart';
 import 'package:call_watcher/core/widgets/bottom_nav/bottom_nav_admin.dart';
+import 'package:call_watcher/core/widgets/call_logs/admin_log_view.dart';
 import 'package:call_watcher/core/widgets/location/location_display.dart';
 import 'package:call_watcher/data/models/admin.dart';
+import 'package:call_watcher/data/models/call_log.dart';
+import 'package:call_watcher/domain/entity/call_log/call_log.dart';
+import 'package:call_watcher/domain/repository/call_log.dart';
+import 'package:call_watcher/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -22,6 +28,8 @@ class _AdminHomeState extends State<AdminHome> {
   bool _isLoading = true;
   String _currentAddress = "Fetching address...";
   int currentPageIndex = 0;
+  List<CallLogRecord> logs = [];
+  int totalCount = 0;
 
   @override
   void initState() {
@@ -30,6 +38,7 @@ class _AdminHomeState extends State<AdminHome> {
     currentPageIndex = 0;
     _loadAdminData();
     _requestPermissions();
+    _getLogs();
   }
 
   Future<void> _loadAdminData() async {
@@ -84,6 +93,23 @@ class _AdminHomeState extends State<AdminHome> {
     await prefs.remove('user_role');
   }
 
+  Future<void> _getLogs() async {
+    final PaginatedCallLogsResponse? response =
+        await serviceLocator<CallLogRepository>()
+            .getCallLogsPaginated(page: 1, pageSize: 10);
+
+    if (response == null) return;
+    final List<CallLogRecord> records = response.logs;
+    final int count = response.totalCount;
+
+    if (records.isNotEmpty && count > 0) {
+      setState(() {
+        logs = records;
+        totalCount = count;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,43 +149,14 @@ class _AdminHomeState extends State<AdminHome> {
           ),
         ],
       ),
-      bottomNavigationBar: AdminBottomNavBar(pageIndex: currentPageIndex, onTap: (int index) {
+      bottomNavigationBar: AdminBottomNavBar(
+        pageIndex: currentPageIndex,
+        onTap: (int index) {
           setState(() {
             currentPageIndex = index;
           });
-        },),
-      // bottomNavigationBar: NavigationBar(
-      //   destinations: const [
-      //     NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-      //     NavigationDestination(icon: Icon(Icons.person), label: 'Users'),
-      //     NavigationDestination(
-      //         icon: Icon(Icons.leaderboard), label: 'Analytics'),
-      //     NavigationDestination(icon: Icon(Icons.list), label: 'logs'),
-      //   ],
-      //   labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      //   selectedIndex: currentPageIndex,
-      //   onDestinationSelected: (int index) {
-      //     setState(() {
-      //       currentPageIndex = index;
-      //     });
-      //   },
-      // ),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   items: const <BottomNavigationBarItem>[
-      //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-      //     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Users'),
-      //     BottomNavigationBarItem(
-      //         icon: Icon(Icons.leaderboard), label: 'Analytics'),
-      //     BottomNavigationBarItem(icon: Icon(Icons.list), label: 'logs'),
-      //   ],
-      //   currentIndex: 3,
-      //   selectedItemColor: Colors.amber[800],
-      //   unselectedItemColor: Colors.black,
-      //   showUnselectedLabels: true,
-      //   showSelectedLabels: true,
-
-      //   onTap: (i) {},
-      // ),
+        },
+      ),
       body: _isLoading || admin == null
           ? const Center(
               child: CircularProgressIndicator(),
@@ -179,7 +176,80 @@ class _AdminHomeState extends State<AdminHome> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         LocationDisplay(location: _currentAddress),
+                        const SizedBox(height: 18),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Call Logs",
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  Text(
+                                    "$totalCount results found",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 45, // square size
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      8), // rounded square
+                                  border: Border.fromBorderSide(
+                                    BorderSide(
+                                        color: Colors.grey.shade200, width: 1),
+                                  ),
+                                  // boxShadow: [
+                                  //   BoxShadow(
+                                  //     color: Colors.black
+                                  //         .withOpacity(0.08), // soft shadow
+                                  //     spreadRadius: 1,
+                                  //     blurRadius: 6,
+                                  //     offset:
+                                  //         const Offset(0, 2), // shadow position
+                                  //   ),
+                                  // ],
+                                ),
+                                child: IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(Icons.filter_list),
+                                  color: Colors.black87,
+                                  splashRadius:
+                                      24, // keep ripple effect centered
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 8),
+                        if (totalCount <= 0)
+                          const Center(
+                            child: Text("No Data Found"),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: logs.length,
+                            itemBuilder: (context, index) => AdminLogView(
+                              callLog: logs[index],
+                            ),
+                          ),
                       ],
                     ),
                   ),

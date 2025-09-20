@@ -81,6 +81,8 @@ class CallLogsStore {
     ''', args.sublist(0, args.length - 2)); // Remove LIMIT and OFFSET from args
 
     final totalCount = totalCountResult.first['count'] as int;
+    
+    print("result: $result, totalCount: $totalCountResult");
 
     return {
       'data': result,

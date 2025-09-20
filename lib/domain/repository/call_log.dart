@@ -1,4 +1,5 @@
 import 'package:call_watcher/data/models/call_log.dart';
+import 'package:call_watcher/domain/entity/call_log/call_log.dart';
 import 'package:dartz/dartz.dart';
 
 abstract class CallLogRepository {
@@ -10,4 +11,11 @@ abstract class CallLogRepository {
     int requestedPage,
     int pageSize,
   );
+  Future<PaginatedCallLogsResponse?> getCallLogsPaginated({
+    int? userId,
+    int? startDate,
+    int? endDate,
+    int page,
+    int pageSize,
+  });
 }
