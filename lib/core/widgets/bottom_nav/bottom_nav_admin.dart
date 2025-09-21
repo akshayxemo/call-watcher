@@ -1,5 +1,6 @@
 import 'package:call_watcher/core/config/theme/app.colors.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminBottomNavBar extends StatelessWidget {
   final int pageIndex;
@@ -12,15 +13,36 @@ class AdminBottomNavBar extends StatelessWidget {
   });
 
   final navItems = const [
-    {'icon': Icons.home_outlined, 'label': "Home"},
-    {'icon': Icons.person_2_outlined, 'label': "Users"},
-    {'icon': Icons.leaderboard_outlined, 'label': "Analytics"},
+    {
+      'icon': Icons.home_outlined,
+      'label': "Home",
+      'path': '/home/admin',
+    },
+    {
+      'icon': Icons.person_2_outlined,
+      'label': "Users",
+      'path': '/home/admin/users',
+    },
+    {
+      'icon': Icons.leaderboard_outlined,
+      'label': "Analytics",
+      'path': '/home/admin/analytics',
+    },
   ];
 
   static const _indicatorHeight = 3.0;
   static const _barHeight = 60.0;
   static const _animDuration = Duration(milliseconds: 260);
   static const _animCurve = Curves.easeOutCubic;
+
+  onChangeNavigation(
+    BuildContext context, {
+    String location = "/home/admin",
+    int index = 0,
+  }) {
+    onTap(index);
+    context.go(location);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +83,11 @@ class AdminBottomNavBar extends StatelessWidget {
                         icon: data['icon'] as IconData,
                         label: data['label'] as String,
                         selected: selected,
-                        onTap: () => onTap(i),
+                        onTap: () => onChangeNavigation(
+                          context,
+                          index: i,
+                          location: data['path'] as String,
+                        ),
                       );
                     }).expand((w) sync* {
                       yield Expanded(child: w);

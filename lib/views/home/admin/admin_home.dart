@@ -4,6 +4,7 @@ import 'package:call_watcher/core/widgets/app_bar/admin_home.dart';
 import 'package:call_watcher/core/widgets/bottom_nav/bottom_nav_admin.dart';
 import 'package:call_watcher/core/widgets/call_logs/admin_log_view.dart';
 import 'package:call_watcher/core/widgets/location/location_display.dart';
+import 'package:call_watcher/core/widgets/pagination/pagination.dart';
 import 'package:call_watcher/data/models/admin.dart';
 import 'package:call_watcher/data/models/call_log.dart';
 import 'package:call_watcher/domain/entity/call_log/call_log.dart';
@@ -26,10 +27,13 @@ class AdminHome extends StatefulWidget {
 class _AdminHomeState extends State<AdminHome> {
   Admin? admin;
   bool _isLoading = true;
+  bool _isLogsLoading = false;
   String _currentAddress = "Fetching address...";
   int currentPageIndex = 0;
   List<CallLogRecord> logs = [];
   int totalCount = 0;
+  int page = 1;
+  int limit = 10;
 
   @override
   void initState() {
@@ -94,9 +98,12 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Future<void> _getLogs() async {
+    setState(() {
+      _isLogsLoading = true;
+    });
     final PaginatedCallLogsResponse? response =
         await serviceLocator<CallLogRepository>()
-            .getCallLogsPaginated(page: 1, pageSize: 10);
+            .getCallLogsPaginated(page: page, pageSize: limit);
 
     if (response == null) return;
     final List<CallLogRecord> records = response.logs;
@@ -108,6 +115,16 @@ class _AdminHomeState extends State<AdminHome> {
         totalCount = count;
       });
     }
+    setState(() {
+      _isLogsLoading = false;
+    });
+  }
+
+  void _onPageChanged(int newPage) {
+    setState(() {
+      page = newPage;
+      _getLogs(); // <-- fetch logs when page changes
+    });
   }
 
   @override
@@ -207,41 +224,92 @@ class _AdminHomeState extends State<AdminHome> {
                                 width: 45, // square size
                                 height: 45,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(
                                       8), // rounded square
                                   border: Border.fromBorderSide(
                                     BorderSide(
-                                        color: Colors.grey.shade200, width: 1),
+                                      color: Colors.grey.shade200,
+                                      width: 1,
+                                    ),
                                   ),
-                                  // boxShadow: [
-                                  //   BoxShadow(
-                                  //     color: Colors.black
-                                  //         .withOpacity(0.08), // soft shadow
-                                  //     spreadRadius: 1,
-                                  //     blurRadius: 6,
-                                  //     offset:
-                                  //         const Offset(0, 2), // shadow position
-                                  //   ),
-                                  // ],
                                 ),
-                                child: IconButton(
-                                  onPressed: () {},
-                                  icon: const Icon(Icons.filter_list),
-                                  color: Colors.black87,
-                                  splashRadius:
-                                      24, // keep ripple effect centered
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(7),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(16),
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.white,
+                                          builder: (BuildContext context) {
+                                            return SafeArea(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(16.0),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Text(
+                                                      "Filter Options",
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                          Icons.sort),
+                                                      title:
+                                                          const Text("Sort by"),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        // handle action
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                          Icons.category),
+                                                      title: const Text(
+                                                          "Category"),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        // handle action
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: const Icon(Icons.filter_list),
+                                    ),
+                                  ),
                                 ),
                               )
                             ],
                           ),
                         ),
                         const SizedBox(height: 8),
-                        if (totalCount <= 0)
+                        if (_isLogsLoading)
+                          const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        if (totalCount <= 0 && !_isLogsLoading)
                           const Center(
                             child: Text("No Data Found"),
                           )
-                        else
+                        else ...[
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -250,6 +318,16 @@ class _AdminHomeState extends State<AdminHome> {
                               callLog: logs[index],
                             ),
                           ),
+                          PaginationView(
+                            currentPage: page,
+                            totalPage: (totalCount / limit).ceil(),
+                            onFirst: () => _onPageChanged(1),
+                            onLast: () =>
+                                _onPageChanged((totalCount / limit).ceil()),
+                            onNext: (i) => _onPageChanged(i + 1),
+                            onPrevious: (i) => _onPageChanged(i - 1),
+                          )
+                        ]
                       ],
                     ),
                   ),
