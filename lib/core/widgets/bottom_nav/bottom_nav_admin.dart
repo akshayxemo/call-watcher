@@ -52,14 +52,14 @@ class AdminBottomNavBar extends StatelessWidget {
           border: Border.fromBorderSide(
             BorderSide(color: Colors.grey.shade200, width: 1),
           ),
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, 0),
-              color: Colors.grey.shade200,
-              spreadRadius: 1,
-              blurRadius: 80,
-            )
-          ],
+          // boxShadow: [
+          //   BoxShadow(
+          //     offset: const Offset(0, 0),
+          //     color: Colors.grey.shade200,
+          //     spreadRadius: 1,
+          //     blurRadius: 80,
+          //   )
+          // ],
         ),
         child: BottomAppBar(
           elevation: 0.0,

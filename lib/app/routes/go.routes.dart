@@ -1,3 +1,4 @@
+import 'package:call_watcher/app/providers/layout/admin_layout.dart';
 import 'package:call_watcher/views/auth/login/login.employeer.dart';
 import 'package:call_watcher/views/auth/signup.login.dart';
 import 'package:call_watcher/views/auth/signup/signup.employee.dart';
@@ -26,10 +27,10 @@ class AppRoutes {
         builder: (context, state) => const SplashPage(),
       ),
       GoRoute(
-        path: auth,
-        name: 'auth',
-        builder: (context, state) => const SignUpLoginPage(),
-        routes: [
+          path: auth,
+          name: 'auth',
+          builder: (context, state) => const SignUpLoginPage(),
+          routes: [
             GoRoute(
               path: loginEmployee,
               name: 'login:employee',
@@ -40,17 +41,25 @@ class AppRoutes {
               name: 'signup:employee',
               builder: (context, state) => const SignupEmployeePage(),
             ),
-          ]
-      ),
+          ]),
       GoRoute(
         path: employeeHome,
         name: 'employee:home',
         builder: (context, state) => const EmployeeHomePage(),
       ),
-      GoRoute(
-        path: adminHome,
-        name: 'admin:home',
-        builder: (context, state) => const AdminHome(),
+      ShellRoute(
+        // for layout and page
+        // This builder runs once and persists
+        builder: (context, state, child) {
+          return AdminLayout(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: adminHome,
+            name: 'admin:home',
+            builder: (context, state) => const AdminHome(),
+          ),
+        ],
       ),
     ],
   );
