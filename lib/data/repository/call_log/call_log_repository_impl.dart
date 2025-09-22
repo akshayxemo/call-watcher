@@ -25,8 +25,18 @@ class CallLogRepositoryImpl implements CallLogRepository {
   Future<Either<Exception, int>> registerLogsForEmployee(
       int employeeId, List<CallLogRecord> records) async {
     try {
-      final List<Map<String, dynamic>> logs =
+      List<Map<String, dynamic>> logs =
           callLogRecordsMapWithoutId(records);
+      // Keys you want to strip out
+      List<String> keysToRemove = ["userName", "userId"];
+
+      // Remove them
+      for (var log in logs) {
+        for (var key in keysToRemove) {
+          log.remove(key);
+        }
+      }
+      
       final int result =
           await CallLogsStore().insertCallLogsBatch(logs, employeeId);
 
