@@ -22,9 +22,40 @@ class UsersStore {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAllUsers() async {
+  Future<List<Map<String, dynamic>>> getAllUsers({
+    int? page,
+    int? limit,
+    String? searchCharacter,
+  }) async {
     final db = await _databaseHelper.database;
-    final result = await db.query('users');
+    List<Map<String, Object?>> result = [];
+    List<dynamic> args = [];
+    print("page: $page, limit: $limit, searchCharacter: $searchCharacter");
+
+    if ((page == null || page <= 0) &&
+        (limit == null || limit <= 0) &&
+        searchCharacter == null) {
+      print("Condition IF");
+      result = await db.query('users');
+    } else {
+      print("Condition ELSE");
+      final currentPage = page ?? 1;
+      final pageSize = (limit ?? 10);
+      final offset = (currentPage - 1) * pageSize;
+      final search = searchCharacter ?? "";
+
+      args.add(currentPage);
+      args.add(offset);
+
+      result = await db.query(
+        'users',
+        where: 'LOWER(name) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?)',
+        whereArgs: ["%$search%", "%$search%"],
+        limit: pageSize,
+        offset: offset,
+      );
+    }
+
     if (result.isNotEmpty) {
       return result;
     } else {

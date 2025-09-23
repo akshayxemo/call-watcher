@@ -40,11 +40,12 @@ class CallLogsStore {
     List<String> whereClauses = ['call_logs.user_id IS NOT NULL'];
     List<dynamic> args = [];
 
-    if (userId != null) {
+    if (userId != null && userId != 0) {
       whereClauses.add('call_logs.user_id = ?');
       args.add(userId);
     }
-    if (startDate != null && endDate != null) {
+    if ((startDate != null && endDate != null) &&
+        (startDate != 0 && endDate != 0)) {
       whereClauses.add('call_logs.date BETWEEN ? AND ?');
       args.add(startDate);
       args.add(endDate);

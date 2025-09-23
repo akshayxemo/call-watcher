@@ -10,4 +10,21 @@ class Employee {
     required this.email,
     this.password,
   });
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      email: json["email"] ?? "",
+      name: json["name"] ?? "",
+      id: json["id"] as int,
+      password: json["password"] as String,
+    );
+  }
+
+  factory Employee.fromJsonSafe(Map<String, dynamic> json) {
+    return Employee(
+      email: json["email"] ?? "",
+      name: json["name"] ?? "",
+      id: json["id"] as int,
+    );
+  }
 }

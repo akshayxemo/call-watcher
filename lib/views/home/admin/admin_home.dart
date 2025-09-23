@@ -4,6 +4,7 @@ import 'package:call_watcher/core/widgets/filters/filter_modal.dart';
 import 'package:call_watcher/core/widgets/location/location_display.dart';
 import 'package:call_watcher/core/widgets/pagination/pagination.dart';
 import 'package:call_watcher/data/models/call_log.dart';
+import 'package:call_watcher/data/models/employee.dart';
 import 'package:call_watcher/domain/entity/call_log/call_log.dart';
 import 'package:call_watcher/domain/repository/call_log.dart';
 import 'package:call_watcher/service_locator.dart';
@@ -32,6 +33,7 @@ class _AdminHomeState extends State<AdminHome> {
   int? _startDate;
   int? _endDate;
   int? _totalFilters;
+  Employee? _user;
 
   @override
   void initState() {
@@ -84,10 +86,12 @@ class _AdminHomeState extends State<AdminHome> {
     });
     final PaginatedCallLogsResponse? response =
         await serviceLocator<CallLogRepository>().getCallLogsPaginated(
-            page: page,
-            pageSize: limit,
-            endDate: _endDate,
-            startDate: _startDate);
+      page: page,
+      pageSize: limit,
+      endDate: _endDate,
+      startDate: _startDate,
+      userId: _user?.id,
+    );
 
     if (response == null) {
       print("response is null");
@@ -114,19 +118,26 @@ class _AdminHomeState extends State<AdminHome> {
     // });
   }
 
-  Future<void> _getFilters({int? startDate, int? endDate}) async {
+  Future<void> _getFilters(
+      {int? startDate, int? endDate, Employee? user}) async {
     int totalFiltersApplied = 0;
 
-    if (startDate != null && endDate != null) {
+    if ((startDate != null && endDate != null) &&
+        (startDate != 0 && endDate != 0)) {
       totalFiltersApplied += 1;
-    } else {
-      totalFiltersApplied = 0;
+    }
+
+    if (user != null) {
+      totalFiltersApplied += 1;
     }
 
     setState(() {
       _startDate = startDate;
       _endDate = endDate;
       _totalFilters = totalFiltersApplied;
+      _user = user;
+      page = 1;
+      limit = 10;
     });
     await _getLogs();
   }
@@ -146,6 +157,7 @@ class _AdminHomeState extends State<AdminHome> {
           setState(() {
             _startDate = null;
             _endDate = null;
+            _user = null;
             page = 1;
             limit = 10;
           });
@@ -212,6 +224,7 @@ class _AdminHomeState extends State<AdminHome> {
                                   onTap: () {
                                     showModalBottomSheet(
                                       context: context,
+                                      isScrollControlled: true,
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.vertical(
                                           top: Radius.circular(16),
@@ -223,6 +236,7 @@ class _AdminHomeState extends State<AdminHome> {
                                           getDataFn: _getFilters,
                                           startDate: _startDate,
                                           endDate: _endDate,
+                                          user: _user,
                                         );
                                       },
                                     );
