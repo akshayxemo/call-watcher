@@ -2,7 +2,6 @@ import 'package:call_watcher/core/config/theme/app.colors.dart';
 import 'package:call_watcher/core/widgets/pagination/pagination.dart';
 import 'package:call_watcher/core/widgets/users/users_card.dart';
 import 'package:call_watcher/data/models/employee.dart';
-import 'package:call_watcher/domain/entity/employee/employee.dart';
 import 'package:call_watcher/domain/repository/users.dart';
 import 'package:call_watcher/service_locator.dart';
 import 'package:flutter/material.dart';
@@ -111,7 +110,9 @@ class _UsersViewState extends State<UsersView> {
                               suffixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(width: 8,),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
                                   if (_searchControl.text.isNotEmpty &&
                                       _searchFocus.hasFocus) ...[
                                     TextButton(
@@ -129,14 +130,12 @@ class _UsersViewState extends State<UsersView> {
                                       child: const Text("GO"),
                                     ),
                                   ],
-
                                   if (_searchControl.text.isNotEmpty) ...[
                                     IconButton(
                                       icon: const Icon(Icons.close),
                                       onPressed: _clearSearch,
                                     ),
                                   ],
-                                  
                                 ],
                               ),
 
@@ -164,41 +163,48 @@ class _UsersViewState extends State<UsersView> {
                     ),
                   ),
 
-                  // List items
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final emp = employees[index]!;
-                          return UsersCard(employee: emp);
-                        },
-                        childCount: employees.length,
-                      ),
+                  if (totalCount == 0)
+                    const Center(
+                      child: Text("No Data Found"),
                     ),
-                  ),
 
-                  // Bottom pagination – sticks to bottom if content is short
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          PaginationView(
-                            currentPage: page,
-                            totalPage: (totalCount / limit).ceil(),
-                            onFirst: () => _onPageChanged(1),
-                            onLast: () =>
-                                _onPageChanged((totalCount / limit).ceil()),
-                            onNext: (i) => _onPageChanged(i + 1),
-                            onPrevious: (i) => _onPageChanged(i - 1),
-                          ),
-                        ],
+                  if (totalCount > 0) ...[
+                    // List items
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final emp = employees[index]!;
+                            return UsersCard(employee: emp);
+                          },
+                          childCount: employees.length,
+                        ),
                       ),
                     ),
-                  ),
+
+                    // Bottom pagination – sticks to bottom if content is short
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            PaginationView(
+                              currentPage: page,
+                              totalPage: (totalCount / limit).ceil(),
+                              onFirst: () => _onPageChanged(1),
+                              onLast: () =>
+                                  _onPageChanged((totalCount / limit).ceil()),
+                              onNext: (i) => _onPageChanged(i + 1),
+                              onPrevious: (i) => _onPageChanged(i - 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]
                 ],
               ),
       ),
