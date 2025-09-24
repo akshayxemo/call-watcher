@@ -45,11 +45,12 @@ class _AdminHomeState extends State<AdminHome> {
     _getLogs();
   }
 
-  _requestPermissions() async {
+  Future<void> _requestPermissions() async {
     debugPrint("Requesting location and call log permissions...");
 
     // Request location permission
     PermissionStatus locationStatus = await Permission.location.request();
+    if (!mounted) return; // <-- guard
     if (locationStatus.isGranted) {
       _getLocation(); // Fetch location
     } else {
@@ -60,7 +61,7 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   // Get the current location and reverse geocode it to get the address
-  _getLocation() async {
+  Future<void> _getLocation() async {
     if (await Permission.location.isGranted) {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -74,6 +75,8 @@ class _AdminHomeState extends State<AdminHome> {
           await placemarkFromCoordinates(position.latitude, position.longitude);
       Placemark place = placemarks.first; // Get the first result
 
+      if (!mounted) return; // <-- guard
+
       setState(() {
         _currentAddress = "${place.locality}, ${place.country}";
       });
@@ -81,9 +84,11 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Future<void> _getLogs() async {
-    setState(() {
-      _isLogsLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLogsLoading = true;
+      });
+    }
     final PaginatedCallLogsResponse? response =
         await serviceLocator<CallLogRepository>().getCallLogsPaginated(
       page: page,
@@ -92,7 +97,7 @@ class _AdminHomeState extends State<AdminHome> {
       startDate: _startDate,
       userId: _user?.id,
     );
-
+    if (!mounted) return; // <-- guard
     if (response == null) {
       print("response is null");
       setState(() {
@@ -102,7 +107,6 @@ class _AdminHomeState extends State<AdminHome> {
       });
       return;
     }
-    ;
     final List<CallLogRecord> records = response.logs;
     final int count = response.totalCount;
 
@@ -131,22 +135,26 @@ class _AdminHomeState extends State<AdminHome> {
       totalFiltersApplied += 1;
     }
 
-    setState(() {
-      _startDate = startDate;
-      _endDate = endDate;
-      _totalFilters = totalFiltersApplied;
-      _user = user;
-      page = 1;
-      limit = 10;
-    });
+    if (mounted) {
+      setState(() {
+        _startDate = startDate;
+        _endDate = endDate;
+        _totalFilters = totalFiltersApplied;
+        _user = user;
+        page = 1;
+        limit = 10;
+      });
+    }
     await _getLogs();
   }
 
   void _onPageChanged(int newPage) {
-    setState(() {
-      page = newPage;
-      _getLogs(); // <-- fetch logs when page changes
-    });
+    if (mounted) {
+      setState(() {
+        page = newPage;
+      });
+    }
+    _getLogs(); // <-- fetch logs when page changes
   }
 
   @override
@@ -154,16 +162,18 @@ class _AdminHomeState extends State<AdminHome> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () async {
-          setState(() {
-            _startDate = null;
-            _endDate = null;
-            _user = null;
-            page = 1;
-            limit = 10;
-          });
-          // Add your refresh logic here if needed
-          await _getLogs();
-          return;
+          if (mounted) {
+            setState(() {
+              _startDate = null;
+              _endDate = null;
+              _user = null;
+              page = 1;
+              limit = 10;
+            });
+            // Add your refresh logic here if needed
+            await _getLogs();
+            return;
+          }
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),

@@ -36,7 +36,10 @@ class UsersStore {
         (limit == null || limit <= 0) &&
         searchCharacter == null) {
       print("Condition IF");
-      result = await db.query('users');
+      result = await db.query(
+        'users',
+        orderBy: "name DESC",
+      );
     } else {
       print("Condition ELSE");
       final currentPage = page ?? 1;
@@ -53,6 +56,7 @@ class UsersStore {
         whereArgs: ["%$search%", "%$search%"],
         limit: pageSize,
         offset: offset,
+        orderBy: "name DESC",
       );
     }
 
@@ -61,6 +65,48 @@ class UsersStore {
     } else {
       return [];
     }
+  }
+
+  Future<Map<String, dynamic>> getAllUsersPaginated({
+    int page = 1,
+    int limit = 10,
+    String? searchCharacter,
+  }) async {
+    final db = await _databaseHelper.database;
+    List<Map<String, Object?>> result = [];
+    List<dynamic> args = [];
+    print(
+        "getAllUsersPaginated >>> page: $page, limit: $limit, searchCharacter: $searchCharacter");
+    final currentPage = page;
+    final pageSize = (limit);
+    final offset = (currentPage - 1) * pageSize;
+    final search = searchCharacter ?? "";
+
+    args.add(currentPage);
+    args.add(offset);
+
+    result = await db.query(
+      'users',
+      where: 'LOWER(name) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?)',
+      whereArgs: ["%$search%", "%$search%"],
+      limit: pageSize,
+      offset: offset,
+    );
+
+    final totalCountResult = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE LOWER(name) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?)
+      ''', ["%$search%", "%$search%"]);
+
+    final totalCount = totalCountResult.first['count'] as int;
+
+    print("result: $result, totalCount: $totalCountResult");
+
+    return {
+      'data': result,
+      'totalCount': totalCount,
+    };
   }
 
   Future<Map<String, dynamic>?> getUserById(int id) async {

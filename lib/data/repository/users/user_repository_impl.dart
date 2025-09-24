@@ -1,4 +1,5 @@
 import 'package:call_watcher/data/models/employee.dart';
+import 'package:call_watcher/domain/entity/employee/employee.dart';
 import 'package:call_watcher/domain/repository/users.dart';
 import 'package:call_watcher/domain/sqlite/users/users.sqlite.dart';
 
@@ -18,6 +19,27 @@ class UserRepositoryImpl implements UsersRepository {
     } catch (error) {
       print(error.toString());
       return [];
+    }
+  }
+
+  @override
+  Future<PaginatedEmployeeResponse?> getAllEmployeesPaginatedResponse(
+      {int page = 1, int limit = 10, String? search}) async {
+    try {
+      print("page: $page, limit: $limit, search: $search");
+      Map<String, dynamic> response = await UsersStore().getAllUsersPaginated(
+          limit: limit, page: page, searchCharacter: search);
+      final List<Employee> employee = (response["data"] ?? [])
+          .map((e) => Employee.fromJsonSafe(e))
+          .whereType<Employee>() // drops nulls
+          .toList();
+      return PaginatedEmployeeResponse(
+        data: employee,
+        totalPages: response["totalCount"] as int,
+      );
+    } catch (error) {
+      print(error.toString());
+      return null;
     }
   }
 }
